@@ -63,6 +63,12 @@ class CityDataGateway(abc.ABC):
         Method to get information about a specific city from storage
         """
 
+    @abc.abstractmethod
+    def get_cities_by_state(self, state_code: str):
+        """
+        Method to get cities by state code
+        """
+
 
 class CityAccessInterface(abc.ABC):
     """
@@ -81,6 +87,12 @@ class CityAccessInterface(abc.ABC):
         Method to get information about a specific city
         """
 
+    @abc.abstractmethod
+    def get_cities_by_state(self, state_code: str):
+        """
+        Method to get cities by state code
+        """
+
 
 class CitiesCSVDatabaseGateway(CityDataGateway):
     """
@@ -92,7 +104,7 @@ class CitiesCSVDatabaseGateway(CityDataGateway):
     def __init__(self, database_file: str):
         self._database_file = database_file
         if not os.path.exists(self._database_file):
-            raise Exception("Missing databasefile")
+            raise Exception("Missing database file")
 
     def get_cities(self, city_name: str, levels: List[str]):
         results = []
@@ -127,6 +139,22 @@ class CitiesCSVDatabaseGateway(CityDataGateway):
                     )
                     return city
 
+    def get_cities_by_state(self, state_code: str):
+        results = []
+        with open(self._database_file) as database:
+            reader = csv.DictReader(database)
+            for row in reader:
+                if state_code.lower() == row["uf"].lower():
+                    city = CitySearchResult(
+                        row["city_name"],
+                        row["ibge_id"],
+                        row["uf"],
+                        OpennessLevel(row["openness_level"]),
+                        self._split_urls(row["gazettes_urls"]),
+                    )
+                    results.append(city)
+        return results
+
     def _split_urls(self, concatenated_urls: str) -> Union[List[str], None]:
         urls = concatenated_urls.strip().split(",")
         if len(urls) == 1 and len(urls[0]) == 0:
@@ -144,6 +172,11 @@ class CityAccess(CityAccessInterface):
     def get_city(self, territory_id: str):
         city = self._data_gateway.get_city(territory_id)
         return vars(city) if city is not None else None
+
+    def get_cities_by_state(self, state_code: str):
+        return [
+            vars(city) for city in self._data_gateway.get_cities_by_state(state_code)
+        ]
 
 
 def create_cities_data_gateway(city_database_file: str) -> CityDataGateway:

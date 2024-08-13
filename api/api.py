@@ -488,6 +488,24 @@ async def get_city(
     return {"city": city_info}
 
 
+@app.get(
+    "/cities/state/{state_code}",
+    response_model=CitiesSearchResponse,
+    name="Get cities by state code",
+    description="Get general info from cities within a specific state using the state code.",
+    response_model_exclude_unset=True,
+    response_model_exclude_none=True,
+    responses={404: {"model": HTTPExceptionMessage, "description": "State not found"}},
+)
+async def get_cities_by_state(
+    state_code: str = Path(..., description="State code (e.g., 'DF', 'SP', etc.).")
+):
+    cities = app.cities.get_cities_by_state(state_code)
+    if not cities:
+        return JSONResponse(status_code=404, content={"detail": "State not found."})
+    return {"cities": cities}
+
+
 @app.post(
     "/suggestions",
     response_model=CreatedSuggestionResponse,

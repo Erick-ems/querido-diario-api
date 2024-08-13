@@ -81,6 +81,20 @@ class PostgreSQLDatabase(CompaniesDatabaseInterface):
             [self._format_partner_data(result, cnpj) for result in results],
         )
 
+    def get_companies_by_state(self, state_code: str) -> List[Company]:
+        command = """
+        SELECT
+            *
+        FROM
+            resposta_cnpj
+        WHERE
+            uf = %(state_code)s
+        ;
+        """
+        data = {"state_code": state_code}
+        results = list(self._select(command, data))
+        return [self._format_company_data(result, result[1]) for result in results]
+
     def _format_company_data(self, data: Tuple, cnpj: str) -> Company:
         cnpj_only_digits = self._cnpj_only_digits(cnpj)
         cnpj_basico, cnpj_ordem, cnpj_dv = self._split_cnpj(cnpj)
@@ -204,23 +218,11 @@ class PostgreSQLDatabase(CompaniesDatabaseInterface):
 
     def _format_full_cnpj(self, cnpj: str) -> str:
         cnpj_only_digits = self._cnpj_only_digits(cnpj)
-        mask = "{}.{}.{}/{}-{}"
-        return mask.format(
-            cnpj_only_digits[:2],
-            cnpj_only_digits[2:5],
-            cnpj_only_digits[5:8],
-            cnpj_only_digits[8:12],
-            cnpj_only_digits[12:],
-        )
+        return f"{cnpj_only_digits[:2]}.{cnpj_only_digits[2:5]}.{cnpj_only_digits[5:8]}/{cnpj_only_digits[8:12]}-{cnpj_only_digits[12:]}"
 
     def _split_cnpj(self, cnpj: str) -> Tuple[str, str, str]:
         cnpj_only_digits = self._cnpj_only_digits(cnpj)
-        return cnpj_only_digits[:8], cnpj_only_digits[8:12], cnpj_only_digits[12:]
-
-    def _unsplit_cnpj(self, cnpj_basico: str, cnpj_ordem: str, cnpj_dv: str) -> str:
-        mask = "{cnpj_basico}{cnpj_ordem}{cnpj_dv}"
-        return mask.format(
-            cnpj_basico=str(cnpj_basico).zfill(8),
-            cnpj_ordem=str(cnpj_ordem).zfill(4),
-            cnpj_dv=str(cnpj_dv).zfill(2),
-        )
+        cnpj_basico = cnpj_only_digits[:8]
+        cnpj_ordem = cnpj_only_digits[8:12]
+        cnpj_dv = cnpj_only_digits[12:]
+        return cnpj_basico, cnpj_ordem, cnpj_dv
