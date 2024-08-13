@@ -4,13 +4,12 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_get_cities_by_state_valid_code():
-    state_code = "SP"  # Exemplo de código de estado válido
+    state_code = "SP" 
     expected_cities = [
         {"city_id": 1, "name": "São Paulo"},
         {"city_id": 2, "name": "Campinas"}
     ]
     
-    # Simule uma chamada GET para a rota
     response = await client.get(f"/cities/state/{state_code}")
 
     assert response.status_code == 200
@@ -18,9 +17,8 @@ async def test_get_cities_by_state_valid_code():
 
 @pytest.mark.asyncio
 async def test_get_cities_by_state_invalid_code():
-    state_code = "ZZ"  # Exemplo de código de estado inválido
+    state_code = "ZZ"  
     
-    # Simule uma chamada GET para a rota
     response = await client.get(f"/cities/state/{state_code}")
 
     assert response.status_code == 404
@@ -28,20 +26,17 @@ async def test_get_cities_by_state_invalid_code():
 
 @pytest.mark.asyncio
 async def test_get_cities_by_state_missing_code():
-    state_code = ""  # Código de estado ausente
+    state_code = ""  
     
-    # Simule uma chamada GET para a rota
     response = await client.get(f"/cities/state/{state_code}")
 
-    assert response.status_code == 422  # Código de status para validação inválida
+    assert response.status_code == 422  
     assert "detail" in response.json()
 
-# Caso de teste para estado que não possui cidades
 @pytest.mark.asyncio
 async def test_get_cities_by_state_no_cities():
-    state_code = "XX"  # Código de estado que não possui cidades
+    state_code = "XX" 
 
-    # Simule uma chamada GET para a rota
     response = await client.get(f"/cities/state/{state_code}")
 
     assert response.status_code == 404
